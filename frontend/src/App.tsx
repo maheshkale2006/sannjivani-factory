@@ -33,81 +33,94 @@ export default function App() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function sendMessage(
-    event?: React.FormEvent<HTMLFormElement>,
-    suggestedQuestion?: string
-  ) {
-    event?.preventDefault();
 
-    const message = (suggestedQuestion ?? input).trim();
+async function sendMessage(
+  event?: React.FormEvent<HTMLFormElement>,
+  suggestedQuestion?: string
+) {
+  event?.preventDefault();
 
-    if (!message || loading) return;
+  const message = (suggestedQuestion ?? input).trim();
 
-    setMessages((previous) => [
-      ...previous,
-      { role: "user", content: message },
-    ]);
+  if (!message || loading) return;
 
-    setInput("");
-    setLoading(true);
+  setMessages((previous) => [
+    ...previous,
+    { role: "user", content: message },
+  ]);
 
-    try {
-      const response = await fetch("/api/chat", {
+  setInput("");
+  setLoading(true);
+
+  try {
+    const API_URL = import.meta.env.VITE_AI_API_URL;
+
+    if (!API_URL) {
+      throw new Error(
+        "VITE_AI_API_URL is not configured. Check your Vercel environment variables."
+      );
+    }
+
+    const response = await fetch(
+      `${API_URL.replace(/\/+$/, "")}/api/chat`,
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ message }),
-      });
-
-      // Read the response as text first to handle empty or invalid JSON.
-      const raw = await response.text();
-
-      let data: ChatResponse;
-
-      try {
-        data = JSON.parse(raw) as ChatResponse;
-      } catch {
-        throw new Error(
-          `Invalid or empty server response (HTTP ${response.status}). ` +
-            `Response: ${raw || "(empty response)"}`
-        );
       }
+    );
 
-      if (!response.ok) {
-        throw new Error(
-          data.error || `Request failed with status ${response.status}.`
-        );
-      }
+    // Read the response body only once.
+    const raw = await response.text();
 
-      if (typeof data.answer !== "string" || !data.answer.trim()) {
-        throw new Error("The server response does not contain an answer.");
-      }
+    let data: ChatResponse;
 
-      setMessages((previous) => [
-        ...previous,
-        {
-          role: "assistant",
-          content: data.answer!,
-        },
-      ]);
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "An unexpected error occurred.";
-
-      setMessages((previous) => [
-        ...previous,
-        {
-          role: "assistant",
-          content: `Sorry, I couldn't connect: ${errorMessage}`,
-        },
-      ]);
-    } finally {
-      setLoading(false);
+    try {
+      data = JSON.parse(raw) as ChatResponse;
+    } catch {
+      throw new Error(
+        `Invalid or empty server response (HTTP ${response.status}). ` +
+          `Response: ${raw || "(empty response)"}`
+      );
     }
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || `Request failed with status ${response.status}.`
+      );
+    }
+
+    if (typeof data.answer !== "string" || !data.answer.trim()) {
+      throw new Error("The server response does not contain an answer.");
+    }
+
+    setMessages((previous) => [
+      ...previous,
+      {
+        role: "assistant",
+        content: data.answer!,
+      },
+    ]);
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "An unexpected error occurred.";
+
+    setMessages((previous) => [
+      ...previous,
+      {
+        role: "assistant",
+        content: `Sorry, I couldn't connect: ${errorMessage}`,
+      },
+    ]);
+  } finally {
+    setLoading(false);
   }
+}
+
 
   const suggestions = [
     "Which farmers have pending payments?",
