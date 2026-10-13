@@ -1,12 +1,20 @@
+
 {
   "name": "sugarcane-ai",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Sugarcane AI chatbot using MCP, OpenAI, and Supabase",
+  "main": "openai.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "tsx openai.ts",
+    "dev": "tsx watch openai.ts",
+    "test": "echo \"No tests configured\""
   },
-  "keywords": [],
+  "keywords": [
+    "sugarcane-ai",
+    "mcp",
+    "openai",
+    "supabase"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -30,3 +38,4 @@
     "typescript": "^7.0.2"
   }
 }
+
